@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+">
+    <bean id="comment1" class="com.kgc.pojo.Comment">
+        <property name="username" value="张三"/>
+        <property name="content" value="不打鬼子,手痒痒"/>
+    </bean>
+    <bean id="comment2" class="com.kgc.pojo.Comment">
+        <property name="username" value="root"/>
+        <property name="content" value="10种人,认识二进制"/>
+    </bean>
+
+    <bean id="comment3" class="com.kgc.pojo.Comment">
+        <constructor-arg name="username" value="张三" type="java.lang.String" index="0"/>
+        <constructor-arg name="content" value="手痒痒" type="java.lang.String" index="1"/>
+    </bean>
+    <bean id="comment4" class="com.kgc.pojo.Comment">
+        <constructor-arg name="username" value="李四" type="java.lang.String" index="0"/>
+        <constructor-arg name="content" value="二进制" type="java.lang.String" index="1"/>
+    </bean>
+    <bean id="comment5" class="com.kgc.pojo.Comment"
+        p:username="张三" p:content="手痒痒"
+    >
+    </bean>
+    <bean id="comment6" class="com.kgc.pojo.Comment"
+        p:username="李四" p:content="二进制"
+    >
+    </bean>
+
+    <bean id="userDao" class="com.kgc.dao.impl.UserDaoImpl">
+    </bean>
+    <bean id="userService" class="com.kgc.service.impl.UserServiceImpl"
+        p:dao-ref="userDao"
+    >
+    </bean>
+
+    <bean id="a4" class="com.kgc.dao.impl.PA4"/>
+    <bean id="b4" class="com.kgc.dao.impl.PB5"/>
+    <bean id="color" class="com.kgc.dao.impl.InkColor"/>
+    <bean id="block" class="com.kgc.dao.impl.InkBlock"/>
+
+    <bean id="printer" class="com.kgc.pojo.Printer">
+        <property name="ink" ref="block"></property>
+        <property name="paper" ref="a4"></property>
+    </bean>
+
+    <bean id="proxyUtil" class="com.kgc.util.ProxyUtil"></bean>
+    <aop:config>
+        <aop:pointcut id="myPoint" expression="execution(* com.kgc..*.*(..))"/>
+        <aop:aspect ref="proxyUtil">
+            <aop:before method="before" pointcut-ref="myPoint"></aop:before>
+            <aop:after-returning method="afterReturn" pointcut-ref="myPoint"
+                                 returning="str"></aop:after-returning>
+            <aop:after-throwing method="afterThrowing" pointcut-ref="myPoint"
+                                throwing="e"></aop:after-throwing>
+            <aop:after method="after" pointcut-ref="myPoint"></aop:after>
+            <aop:around method="around" pointcut-ref="myPoint"></aop:around>
+        </aop:aspect>
+    </aop:config>
+<!--    启动切面注解-->
+    <aop:aspectj-autoproxy proxy-target-class="true"></aop:aspectj-autoproxy>
+<!--    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>-->
+<!--    开启组件扫描-->
+<!--    <context:component-scan base-package="com.kgc"></context:component-scan>-->
+</beans>

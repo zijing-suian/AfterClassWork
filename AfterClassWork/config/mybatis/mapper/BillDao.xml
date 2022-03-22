@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kgc.dao.BillDao">
+
+    <!--    简单resultMap-->
+    <resultMap id="billMap" type="bill"></resultMap>
+    <resultMap id="user" type="bill"></resultMap>
+    <resultMap id="rollMap" type="bill"></resultMap>
+    <resultMap id="userMap" type="user"></resultMap>
+    <resultMap id="providerMap" type="provider"></resultMap>
+
+
+    <!--    public List<Bill> queryBill(Integer providerId);;-->
+    <select id="queryBill" resultType="bill">
+    <!--select * from smbms_bill where providerId=#{providerId}-->
+    select * from smbms_bill
+    <where>
+        <if test="providerId!=null">
+            and providerId=#{providerId}
+        </if>
+        <include refid="checkDel"></include>
+    </where>
+
+</select>
+
+<!--    public List<Bill> queryBillPage(Map<String,Object> map);-->
+    <select id="queryBillPage" resultType="bill">
+        select * from smbms_bill
+        <where>
+            <if test="myBill!=null">
+                and providerId=#{myBill.id}
+            </if>
+            <include refid="checkDel"></include>
+        </where>
+        <include refid="orderBycreationDate"></include>
+        <if test="page!=null">
+            <foreach collection="page" item="tem" open="limit "
+                     separator="," close="">
+                #{tem}
+            </foreach>
+        </if>
+    </select>
+    <sql id="orderBycreationDate">
+        order by creationDate desc
+    </sql>
+<!--    public List<Bill> queryBillByBean(Bill bill);-->
+    <select id="queryBillByBean" resultType="bill">
+        select * from smbms_bill
+        <!--
+        where providerId=#{providerId}
+        and productName like #{productName}
+        and isPayment=#{isPayment}
+        -->
+        <where>
+            <if test="providerId!=null">
+                and providerId=#{providerId}
+            </if>
+            <if test="productName!=null and productName!=''">
+                and productName like concat('%',#{productName},'%')
+            </if>
+            <if test="isPayment!=null">
+                and isPayment=#{isPayment}
+            </if>
+            <if test="delFlag!=null">
+                <include refid="checkDel"></include>
+            </if>
+        </where>
+    </select>
+
+<!--    public List<Bill> queryBillAndProvider(Bill bill);-->
+    <resultMap id="queryBillAndProviderMap" type="bill">
+        <id property="id" column="id"/>
+        <result column="billCode" property="billCode"/>
+        <result column="productName" property="productName"/>
+        <result column="totalPrice" property="totalPrice"/>
+        <result column="isPayment" property="isPayment"/>
+        <association property="provider" javaType="provider">
+            <result column="proCode" property="proCode"/>
+            <result column="proName" property="proName"/>
+            <result column="proContact" property="proContact"/>
+            <result column="proPhone" property="proPhone"/>
+        </association>
+    </resultMap>
+    <select id="queryBillAndProvider" resultMap="queryBillAndProviderMap">
+        select billCode,productName,proCode,proName,proContact,proPhone,totalPrice,isPayment,p.id
+        from smbms_bill b,smbms_provider p
+        <where>
+            <if test="productName!=null and productName!=''">
+                and productName like #{productName}
+            </if>
+            <if test="id!=null">
+                and b.providerId=p.id
+            </if>
+            <if test="providerId!=null">
+                and providerId=#{providerId}
+            </if>
+            <if test="isPayment!=null">
+                and isPayment=#{isPayment}
+            </if>
+        </where>
+        <!--where productName like #{productName}
+        and b.providerId=p.id
+        and providerId=#{providerId}
+        and isPayment=#{isPayment}-->
+    </select>
+
+
+<!--    public List<Bill> queryBillAndProviderMap(Map<String,Object> map);-->
+    <select id="queryBillAndProviderMap" resultMap="queryBillAndProviderMap">
+        select billCode,productName,proCode,proName,proContact,proPhone,totalPrice,isPayment,p.id
+        from smbms_bill b,smbms_provider p
+        <where>
+            and b.providerId=p.id
+            <if test="code!=null and code!=''">
+                and billCode like concat('%',#{code},'%')
+            </if>
+            <if test="pIds!=null and pIds.size()>0">
+                <foreach collection="pIds" item="pId" separator="," open="and p.id in(" close=")">
+                    #{pId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+<!--    public Integer deleteBill(Integer id);-->
+    <update id="deleteBill">
+        update smbms_bill
+        <set>
+            delFlag=1
+        </set>
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+        </where>
+    </update>
+
+    <sql id="checkDel">
+        and delFlag!=1
+    </sql>
+</mapper>

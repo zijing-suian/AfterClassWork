@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kgc.dao.UserDao">
+
+    <sql id="checkDel">
+        and delFlag!=1
+    </sql>
+<!--    public List<User> queryUsers(Map<String,Object> map);-->
+    <select id="queryUsers" resultType="user">
+        select id,userCode,userName,userPassword,gender,birthday,
+               phone,address,userRole,createdBy,creationDate,modifyBy,
+               modifyDate
+        from smbms_user
+        <where>
+            <if test="ids!=null">
+                <foreach collection="ids" item="myId" open="id in("
+                         close=")" separator=",">
+                    #{myId}
+                </foreach>
+            </if>
+            <if test="myUser!=null">
+                <if test="myUser.userName!=null">
+                    and userName=#{myUser.userName}
+                </if>
+                <if test="myUser.userPassword!=null">
+                    and userPassword=#{myUser.userPassword}
+                </if>
+            </if>
+            <include refid="checkDel"></include>
+        </where>
+        <if test="page!=null">
+            limit #{page.curPageNo},#{page.size}
+        </if>
+    </select>
+
+<!--    public Integer updateUser(User user);-->
+    <update id="updateUser">
+        update smbms_user
+        <set>
+            <if test="userCode!=null and userCode!=''">
+                userCode=#{userCode},
+            </if>
+            <if test="userName!=null and userName!=''">
+                userName=#{userName},
+            </if>
+            <if test="userPassword!=null and userPassword!=''">
+                userPassword=#{userPassword},
+            </if>
+            <if test="gender!=null">
+                gender=#{gender},
+            </if>
+            <if test="birthday!=null">
+                birthday=#{birthday},
+            </if>
+            <if test="phone!=null and phone!=''">
+                phone=#{phone},
+            </if>
+            <if test="modifyBy!=null">
+                modifyBy=#{modifyBy},
+            </if>
+            modifyDate=now()
+        </set>
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+        </where>
+    </update>
+
+<!--    public Integer deleteUser(User user);-->
+    <update id="deleteUser">
+        update smbms_user
+        <set>
+            delFlag=1
+        </set>
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+        </where>
+    </update>
+</mapper>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://mybatis.org/schema/mybatis-spring
+       http://mybatis.org/schema/mybatis-spring-1.2.xsd
+">
+    <!-- Spring希望管理所有的业务逻辑组件，等。。。 -->
+<!--    开启组件扫描[除了控制器]-->
+    <context:component-scan base-package="com.kgc">
+        <context:exclude-filter type="annotation"
+                                expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>
+
+<!-- Spring用来控制业务逻辑。数据源、事务控制、aop -->
+<!--    ||数据源配置  start||-->
+    <!-- 引入数据库的配置文件 [可以引入任何文件]-->
+    <context:property-placeholder location="classpath:dbConfig.properties" />
+
+<!--    使用jdcp数据源-->
+<!--    使用JNDI数据源-->
+    <!--    使用德鲁伊数据源-->
+    <!--    com.alibaba.druid.pool.DruidDataSource-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="url" value="${mysql.url}"></property>
+        <property name="driverClassName" value="${mysql.driver}"></property>
+        <property name="username" value="${mysql.username}"></property>
+        <property name="password" value="${mysql.password}"></property>
+    </bean>
+    <!--    使用c3p0数据源[毛病多==>开发了 dbcp数据源]-->
+<!--    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">-->
+<!--        <property name="jdbcUrl" value="${mysql.url}"></property>-->
+<!--        <property name="driverClass" value="${mysql.driver}"></property>-->
+<!--        <property name="user" value="${mysql.username}"></property>-->
+<!--        <property name="password" value="${mysql.password}"></property>-->
+<!--    </bean>-->
+<!--    ||数据源配置  end||-->
+
+
+<!--    ||事务管理配置  start||-->
+    <!-- spring事务管理 -->
+    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+<!--        指定被控制的数据库-->
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!-- 开启基于注解的事务 -->
+    <tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>
+
+<!--    基于xml-->
+<!--        开启AOP注解-->
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+
+<!--        定义事务传播属性-->
+    <tx:advice id="txAdriver" transaction-manager="dataSourceTransactionManager">
+        <tx:attributes>
+            <tx:method name="query*" read-only="true"/>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+<!--    使用切面使用事务-->
+    <aop:config>
+        <aop:pointcut id="point" expression="execution(* com.kgc..*.*(..))"/>
+        <aop:advisor advice-ref="txAdriver" pointcut-ref="point"/>
+    </aop:config>
+
+
+
+<!--    ||事务管理配置  end||-->
+
+<!--    ||整合mybatis  start||-->
+    <!--
+    整合mybatis
+        目的：1、spring管理所有组件。包括mapper的实现类。
+                service==>Dao   @Autowired:自动注入mapper；
+            2、spring用来管理事务，spring声明式事务
+    -->
+    <!--创建出SqlSessionFactory对象  -->
+    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <!-- configLocation指定全局配置文件的位置 -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"></property>
+        <!--mapperLocations: 指定mapper文件[sql映射文件]的位置-->
+        <property name="mapperLocations" value="classpath:mybatis/mapper/*.xml"></property>
+    </bean>
+
+    <!--配置一个可以进行批量执行的sqlSession  -->
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactoryBean"></constructor-arg>
+        <constructor-arg name="executorType" value="BATCH"></constructor-arg>
+    </bean>
+
+    <!-- 扫描所有的mapper接口的实现，让这些mapper能够自动注入[能自动引入sqlsession]；
+    base-package：指定mapper接口的包名
+        此时拿dao层对象只能通过接口的形式拿[即以接口为类型]
+        自动生成dao层接口的代理对象
+     -->
+<!--    映射文件的注册一般写在mybatis配置文件中-->
+    <mybatis-spring:scan base-package="com.kgc.dao"/>
+    <!-- <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.kgc.dao"></property>
+    </bean> -->
+
+<!--    两个方式:MapperFactoryBean;MapperScannerConfigurer[更优]-->
+<!--    ||整合mybatis  end||-->
+<!--    引入外部配置文件[有注解时可以不用]-->
+<!--    <import resource="classpath:"></import>-->
+</beans>

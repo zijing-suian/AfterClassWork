@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kgc.dao.ProviderDao">
+    <!--
+    namespace:名称空间;指定为接口的全类名
+    id：唯一标识
+    resultType：返回值类型
+    #{id}：从传递过来的参数中取出id值
+
+    public Employee getEmpById(Integer id);
+     -->
+
+<!--    简单resultMap-->
+    <resultMap id="billMap" type="bill">
+        <id column="bId" property="id"/>
+        <result column="billCode" property="billCode"/>
+    </resultMap>
+    <resultMap id="user" type="bill"></resultMap>
+    <resultMap id="rollMap" type="bill"></resultMap>
+    <resultMap id="userMap" type="user"></resultMap>
+    <resultMap id="providerMap" type="provider"></resultMap>
+
+<!--    public List<Provider> queryProvidersAndBills(Provider provider);-->
+    <resultMap id="queryProviderAndBillMap" type="provider">
+        <id column="pId" property="id"/>
+        <result column="proCode" property="proCode"/>
+        <result column="proName" property="proName"/>
+        <result column="proDesc" property="proDesc"/>
+        <result column="proContact" property="proContact"/>
+        <result column="proPhone" property="proPhone"/>
+<!--        一步-->
+        <collection property="bills" ofType="bill" resultMap="billMap">
+        </collection>
+    </resultMap>
+    <select id="queryProvidersAndBills" resultMap="queryProviderAndBillMap">
+        select proCode,proName,proDesc,proContact,proPhone,p.id pId,b.id bId,
+               billCode,productName,totalPrice,isPayment
+        from smbms_provider p
+        left join smbms_bill b
+        on p.id=b.providerId
+        <where>
+            <if test="id!=null">
+                p.id=#{id}
+            </if>
+        </where>
+        <!--where p.id=#{id}-->
+    </select>
+<!--    public List<Provider> queryProvidersAndBillsList(List<Provider> list);-->
+    <select id="queryProvidersAndBillsList" resultMap="queryProviderAndBillMap">
+        select proCode,proName,proDesc,proContact,proPhone,p.id pId,b.id bId,
+               billCode,productName,totalPrice,isPayment
+        from smbms_provider p
+        left join smbms_bill b
+        on p.id=b.providerId
+        <where>
+            <if test="list!=null">
+                <foreach collection="list" item="myPro" separator=","
+                         open="p.id in(" close=")">
+                    #{myPro.id}
+                </foreach>
+                <!--p.id=#{id}-->
+            </if>
+        </where>
+        <!--where p.id=#{id}-->
+    </select>
+
+<!--    public List<Provider> queryProvidersAndBillsMap(Map<String,Object> map);-->
+    <select id="queryProvidersAndBillsMap" resultMap="queryProviderAndBillMap">
+        select proCode,proName,proDesc,proContact,proPhone,p.id pId,b.id bId,
+               billCode,productName,totalPrice,isPayment
+        from smbms_provider p
+        inner join smbms_bill b
+        on p.id=b.providerId
+        <where>
+            <if test="code!=null and code!=''">
+                and billCode like #{code}
+            </if>
+            <if test="pros!=null">
+                and
+                <foreach collection="pros" item="pro" separator=","
+                         open="p.id in(" close=")">
+                    #{pro.id}
+                </foreach>
+                <!--p.id=#{id}-->
+            </if>
+        </where>
+        group by pId,bId
+        <!--where p.id=#{id}-->
+    </select>
+
+<!--    public List<Provider> queryProvidersAndBillsStep(Provider provider);-->
+    <resultMap id="queryProviderAndBillMapStep" type="provider">
+        <id column="id" property="id"/>
+        <result column="proCode" property="proCode"/>
+        <result column="proName" property="proName"/>
+        <result column="proDesc" property="proDesc"/>
+        <result column="proContact" property="proContact"/>
+        <result column="proPhone" property="proPhone"/>
+<!--                分步-->
+        <collection property="bills"
+                    select="com.kgc.dao.BillDao.queryBill"
+                    column="id"></collection>
+    </resultMap>
+    <select id="queryProvidersAndBillsStep" resultMap="queryProviderAndBillMapStep">
+        select proCode,proName,proDesc,proContact,proPhone,id from smbms_provider
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+            <include refid="checkDel"></include>
+        </where>
+    </select>
+<!--    public int queryProviderCount(Provider provider);-->
+    <select id="queryProviderCount" resultType="int" parameterType="provider">
+        select count(1) from smbms_provider
+        <where>
+            <if test="proName!=null and proName!=''">
+                proName like #{proName}
+            </if>
+            <include refid="checkDel"></include>
+        </where>
+    </select>
+
+<!--    public List<Provider> queryProviders(Provider provider);-->
+    <select id="queryProviders" resultType="provider">
+        select * from smbms_provider
+        <where>
+            <if test="id!=null">
+                and id=#{id}
+            </if>
+            <if test="proName!=null and proName!=''">
+                and proName like #{proName}
+            </if>
+            <if test="proCode!=null and proCode!=''">
+                and proCode like #{proCode}
+            </if>
+            <include refid="checkDel"></include>
+        </where>
+    </select>
+
+<!--    public List<Provider> queryProvidersMap(Map<String,Object> map);-->
+    <select id="queryProvidersMap" resultType="provider">
+        select * from smbms_provider
+        <where>
+            <choose>
+                <when test="code!=null and code!=''">
+                    and proCode like #{code}
+                </when>
+                <when test="name!=null and name!=''">
+                    and proName like #{name}
+                </when>
+                <when test="catMan!=null and catMan!=''">
+                    and proContact like #{catMan}
+                </when>
+                <otherwise>
+                    and YEAR(creationDate)=#{time}
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+<!--    public List<Provider> queryProvidersPage(Map<String,Object> map);-->
+    <select id="queryProvidersPage" resultType="provider">
+        select * from smbms_provider
+        <where>
+            <if test="name!=null and name!=''">
+                proName like #{proName}
+            </if>
+            <if test="code!=null and code!=''">
+                proCode like #{proCode}
+            </if>
+            <include refid="checkDel"></include>
+        </where>
+        <include refid="orderBycreationDate"></include>
+        <if test="page!=null">
+            <foreach collection="page" item="tem" open="limit "
+                     separator="," close="">
+                #{tem}
+            </foreach>
+        </if>
+    </select>
+    <sql id="orderBycreationDate">
+        order by creationDate desc
+    </sql>
+
+<!--    public Integer addProvider(Provider provider);-->
+    <insert id="addProvider" parameterType="provider">
+        insert into smbms_provider(proCode,proName,proDesc,proContact,proPhone,proAddress,createdBy,creationDate)
+        values(#{proCode},#{proName},#{proDesc},#{proContact},#{proPhone},#{proAddress},#{createdBy},#{creationDate})
+    </insert>
+
+<!--    public Integer updateProvider(Provider provider);-->
+    <update id="updateProvider">
+        update smbms_provider
+<!--        <set>-->
+<!--            <if test="proCode!=null and proCode!=''">-->
+<!--                proCode=#{proCode},-->
+<!--            </if>-->
+<!--            <if test="proName!=null and proName!=''">-->
+<!--                proName=#{proName},-->
+<!--            </if>-->
+<!--            <if test="proDesc!=null and proDesc!=''">-->
+<!--                proDesc=#{proDesc},-->
+<!--            </if>-->
+<!--            <if test="proContact!=null and proContact!=''">-->
+<!--                proContact=#{proContact},-->
+<!--            </if>-->
+<!--            <if test="proPhone!=null and proPhone!=''">-->
+<!--                proPhone=#{proPhone},-->
+<!--            </if>-->
+<!--            <if test="proAddress!=null and proAddress!=''">-->
+<!--                proAddress=#{proAddress},-->
+<!--            </if>-->
+<!--            <if test="modifyBy!=null">-->
+<!--                modifyBy=#{modifyBy},-->
+<!--            </if>-->
+<!--            <if test="modifyDate!=null and modifyDate!=''">-->
+<!--                modifyDate=#{modifyDate},-->
+<!--            </if>-->
+<!--        </set>-->
+        <trim prefix="set " suffixOverrides=",">
+            <if test="proCode!=null and proCode!=''">
+                proCode=#{proCode},
+            </if>
+            <if test="proName!=null and proName!=''">
+                proName=#{proName},
+            </if>
+            <if test="proDesc!=null and proDesc!=''">
+                proDesc=#{proDesc},
+            </if>
+            <if test="proContact!=null and proContact!=''">
+                proContact=#{proContact},
+            </if>
+            <if test="proPhone!=null and proPhone!=''">
+                proPhone=#{proPhone},
+            </if>
+            <if test="proAddress!=null and proAddress!=''">
+                proAddress=#{proAddress},
+            </if>
+            <if test="modifyBy!=null">
+                modifyBy=#{modifyBy},
+            </if>
+            <if test="modifyDate!=null and modifyDate!=''">
+                modifyDate=#{modifyDate},
+            </if>
+            <if test="delFlag!=null">
+                delFlag=#{delFlag},
+            </if>
+        </trim>
+        <where>
+            <if test="id!=null">
+                id=#{id}
+                <include refid="checkDel"></include>
+            </if>
+        </where>
+    </update>
+
+<!--    public Integer deleteProvider(Provider provider);-->
+    <update id="deleteProvider">
+        update smbms_provider
+        <set>
+            delFlag=1
+        </set>
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+        </where>
+    </update>
+    <sql id="checkDel">
+        and delFlag!=1
+    </sql>
+    <!--	当数据库为mysql时执行-->
+<!--    <select id="getEmpById" resultType="employee">-->
+<!--        select id,name,gender,email from employee where id = #{id}-->
+<!--    </select>-->
+    <!--	<select id="getEmpById" resultType="employee" databaseId="mysql">-->
+    <!--		select id,name,gender,email from employee where id = #{id}-->
+    <!--	</select>-->
+    <!--	当数据库为oracle时执行-->
+    <!--	<select id="getEmpById" resultType="employee" databaseId="oracle">-->
+    <!--		select id,name,gender,email from employee where id = #{id}-->
+    <!--	</select>-->
+</mapper>

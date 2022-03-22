@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--	2. settings 包含很多重要的设置项
+                每一个setting永磊设置一个设置项
+                name:  设置项名
+                value:  设置项取值
+    -->
+    <settings>
+        <setting name="mapUnderscoreToCamelCase"
+                 value="true"/>
+        <setting name="jdbcTypeForNull" value="NULL"/>
+
+<!--        <setting name="logImpl" value="LOG4J"/>-->
+        <!--显示的指定每个我们需要更改的配置的值，即使他是默认的。防止版本更新带来的问题  -->
+        <!--		关联查询会被延迟-->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!--		开启二级缓存配置[默认是开启的]-->
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+    <!--	3.typeAliases : 别名处理器,可以为java类型取别名
+            3.1 为某个java类型其别名[默认或自定义]
+                typeAlias : 为某个java类型取别名
+                    type : 确定要取别名的java类型全类名. 不写时默认为类名首字母小写
+                    alias : 指定新的别名
+            3.2	批量起别名[默认别名,即首字母小写]
+                page : 为某个包下的所有类起默认别名
+                    name : 指定报名,为当前包及其后带包的每一个类均取别名
+                    易发生别名冲突,如果两个包下存在类名相同的类就会导致别名相同.
+                    此时想要搭配Alias()注解为java类取新的别名
+    -->
+    <typeAliases>
+        <package name="com.kgc"/>
+    </typeAliases>
+
+    <!--	5、databaseIdProvider：支持多数据库厂商(mysql,oracle)；
+                 type="DB_VENDOR"：VendorDatabaseIdProvider
+                    作用就是得到数据库厂商的标识(驱动getDatabaseProductName())，mybatis就能根据数据库厂商标识来执行不同的sql;
+                    MySQL，Oracle，SQL Server,xxxx
+
+    -->
+    <databaseIdProvider type="DB_VENDOR">
+        <!-- 为不同的数据库厂商起别名 -->
+        <property name="MySQL" value="mysql"/>
+        <property name="Oracle" value="oracle"/>
+        <property name="SQL Server" value="sqlserver"/>
+    </databaseIdProvider>
+
+</configuration>
